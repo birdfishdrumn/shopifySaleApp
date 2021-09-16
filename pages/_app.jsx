@@ -9,6 +9,7 @@ import "@shopify/polaris/dist/styles.css";
 import translations from "@shopify/polaris/locales/en.json";
 import Cookies from "js-cookie";
 
+
 function userLoggedInFetch(app) {
   const fetchFunction = authenticatedFetch(app);
 
@@ -45,6 +46,7 @@ function MyProvider(props) {
 
   return (
     <ApolloProvider client={client}>
+
       <Component {...props} />
     </ApolloProvider>
   );
@@ -61,9 +63,8 @@ class MyApp extends App {
         <Provider
           config={{
             apiKey: API_KEY,
-            host: Cookies.get(host),
+            host: host,
             forceRedirect: true,
-
           }}
         >
           <MyProvider Component={Component} {...pageProps} />

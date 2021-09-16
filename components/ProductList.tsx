@@ -30,3 +30,24 @@ const GET_PRODUCTS_BY_ID = gql`
     }
   }
 `;
+
+function ProductList() {
+  const { loading, error, data } = useQuery(GET_PRODUCTS_BY_ID, { variables: { ids: store.get('ids') } })
+  console.log(store.get("ids"))
+    if (loading) return <div>Loading...</div>
+  // if (error) return <div>{error.message}</div>
+  console.log("this id data",data)
+
+  return (
+    <div>
+      <h1>Hello</h1>
+      {data.nodes.map(item => {
+        return (
+          <p>{item.title}</p>
+        )
+      })}
+    </div>
+  )
+}
+
+export default ProductList

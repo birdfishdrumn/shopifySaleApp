@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { EmptyState, Layout, Page } from '@shopify/polaris';
 import { ResourcePicker, TitleBar } from '@shopify/app-bridge-react';
-// import store from 'store-js';
+import store from 'store-js';
 // import ProductList from '../components/ProductList';
 import axios from 'axios';
+import ProductList from '../components/ProductList';
 
 function Index() {
 
-    const [modal, setModal] = useState({ open: false })
-    // const emptyState = !store.get('ids');
+
+  const [modal, setModal] = useState({ open: false })
+const [emptyState,setEmptyState] = useState(!store.get('ids'));
+  useEffect(() => {
+      setEmptyState(emptyState)
+  }, [store.get('ids')])
+
+  console.log(store.get("ids"))
+
+  function handleSelection(resources) {
+    const idsFromResources = resources.selection.map((product) => product.id);
+    store.set("ids", idsFromResources)
+    console.log("this is product id",store.get("ids"))
+  }
 
     // function handleSelection(resources) {
     //     const idsFromResources = resources.selection.map((product) => product.id);
@@ -51,20 +64,24 @@ function Index() {
                 showVariants={false}
                 open={modal.open}
                 onCancel={() => setModal({ open: false })}
-                // onSelection={(resources) => handleSelection(resources)}
+                onSelection={(resources) => handleSelection(resources)}
             />
 
-                <Layout>
-                    <EmptyState
-                        heading="Manage your inventory transfers"
-                        action={{
-                            content: 'Select Products',
-                            onAction: () => setModal({ open: true })
-                        }}
-                        image="https://cdn.shopify.com/s/files/1/0757/9955/files/empty-state.svg"
-                    >
-                        <p>Select Products</p>
-                    </EmptyState>
+        <Layout>
+          {emptyState ?
+
+            <EmptyState
+              heading="Manage your inventory transfers"
+              action={{
+                content: 'Select Products',
+                onAction: () => setModal({ open: true })
+              }}
+              image="https://cdn.shopify.com/s/files/1/0757/9955/files/empty-state.svg"
+            >
+              <p>Select Products</p>
+            </EmptyState> :
+            <ProductList/>
+}
                 </Layout>
 
 

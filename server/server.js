@@ -56,12 +56,14 @@ app.prepare().then(async() => {
                         delete ACTIVE_SHOPIFY_SHOPS[shop],
                 });
 
+                console.info("access token,", accessToken)
+
                 if (!response.success) {
                     console.log(
                         `Failed to register APP_UNINSTALLED webhook: ${response.result}`
                     );
                 }
-                ctx.cookies.set("shopOrigin", shop, {
+                ctx.cookies.set("host", shop, {
                     httpOnly: false,
                     secure: true,
                     sameSite: "none"
@@ -79,27 +81,6 @@ app.prepare().then(async() => {
         ctx.res.statusCode = 200;
     };
 
-
-
-    router.get("/getProducts", verifyRequest(), async(ctx, res) => {
-        const { shop, accessToken } = ctx.session;
-
-        if (ctx.session) {
-            const url = `https://${shop}/admin/api/2021-07/products.json`
-            const shopifyHeader = (token) => ({
-                "Content-Type": "application/json",
-                "X-Shopify-Access-Token": token
-            })
-
-            const getProducts = await axios.get(url, { headers: shopifyHeader(accessToken) })
-
-            ctx.body = getProducts.data
-            ctx.res.statusCode = 200
-        }
-
-
-
-    })
 
 
     router.post("/webhooks", async(ctx) => {
@@ -132,7 +113,7 @@ app.prepare().then(async() => {
         }
     });
 
-    server.use(graphQLProxy(ApiVersionGraph.October20))
+    // server.use(graphQLProxy({ version: ApiVersionGraph.October19 }))
     server.use(router.allowedMethods());
     server.use(router.routes());
     server.listen(port, () => {
