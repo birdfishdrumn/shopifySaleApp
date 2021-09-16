@@ -7,6 +7,7 @@ import { authenticatedFetch } from "@shopify/app-bridge-utils";
 import { Redirect } from "@shopify/app-bridge/actions";
 import "@shopify/polaris/dist/styles.css";
 import translations from "@shopify/polaris/locales/en.json";
+import Cookies from "js-cookie";
 
 function userLoggedInFetch(app) {
   const fetchFunction = authenticatedFetch(app);
@@ -60,8 +61,9 @@ class MyApp extends App {
         <Provider
           config={{
             apiKey: API_KEY,
-            host: host,
+            host: Cookies.get(host),
             forceRedirect: true,
+
           }}
         >
           <MyProvider Component={Component} {...pageProps} />

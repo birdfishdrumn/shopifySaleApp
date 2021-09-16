@@ -6,8 +6,12 @@ import Shopify, { ApiVersion } from "@shopify/shopify-api";
 import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
+import axios from "axios"
 
 dotenv.config();
+const { default: graphQLProxy } = require("@shopify/koa-shopify-graphql-proxy")
+const { default: ApiVersionGraph } = require("@shopify/koa-shopify-graphql-proxy")
+
 const port = parseInt(process.env.PORT, 10) || 8081;
 const dev = process.env.NODE_ENV !== "production";
 const app = next({
@@ -34,6 +38,7 @@ app.prepare().then(async() => {
     const server = new Koa();
     const router = new Router();
     server.keys = [Shopify.Context.API_SECRET_KEY];
+
     server.use(
         createShopifyAuth({
             async afterAuth(ctx) {
@@ -47,7 +52,7 @@ app.prepare().then(async() => {
                     accessToken,
                     path: "/webhooks",
                     topic: "APP_UNINSTALLED",
-                    webhookHandler: async(topic, shop, body):Promise<any> =>
+                    webhookHandler: async(topic, shop, body) =>
                         delete ACTIVE_SHOPIFY_SHOPS[shop],
                 });
 
@@ -56,6 +61,11 @@ app.prepare().then(async() => {
                         `Failed to register APP_UNINSTALLED webhook: ${response.result}`
                     );
                 }
+                ctx.cookies.set("shopOrigin", shop, {
+                    httpOnly: false,
+                    secure: true,
+                    sameSite: "none"
+                })
 
                 // Redirect to app with shop parameter upon auth
                 ctx.redirect(`/?shop=${shop}&host=${host}`);
@@ -68,6 +78,29 @@ app.prepare().then(async() => {
         ctx.respond = false;
         ctx.res.statusCode = 200;
     };
+
+
+
+    router.get("/getProducts", verifyRequest(), async(ctx, res) => {
+        const { shop, accessToken } = ctx.session;
+
+        if (ctx.session) {
+            const url = `https://${shop}/admin/api/2021-07/products.json`
+            const shopifyHeader = (token) => ({
+                "Content-Type": "application/json",
+                "X-Shopify-Access-Token": token
+            })
+
+            const getProducts = await axios.get(url, { headers: shopifyHeader(accessToken) })
+
+            ctx.body = getProducts.data
+            ctx.res.statusCode = 200
+        }
+
+
+
+    })
+
 
     router.post("/webhooks", async(ctx) => {
         try {
@@ -99,6 +132,7 @@ app.prepare().then(async() => {
         }
     });
 
+    server.use(graphQLProxy(ApiVersionGraph.October20))
     server.use(router.allowedMethods());
     server.use(router.routes());
     server.listen(port, () => {
